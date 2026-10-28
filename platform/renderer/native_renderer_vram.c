@@ -14,6 +14,55 @@
 #include "platform/native_log.h"
 #include "platform/native_renderer_internal.h"
 
+#if defined(CTR_HANDHELD)
+// GLES only guarantees RGBA reads from a colour buffer. Reading the RG8 VRAM
+// texture directly needs the driver to report RG as its implementation read
+// format, so ask once with the VRAM framebuffer bound, and otherwise read RGBA
+// and repack it the way the Vita path does.
+global_variable GLenum s_vramReadFormat;
+global_variable u8 *s_vramReadRgbaPixels;
+
+internal void NativeRenderer_ReadVRAMPixels(int x, int y, int w, int h)
+{
+	if (s_vramReadFormat == 0)
+	{
+		GLint format = 0;
+		GLint type = 0;
+		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &format);
+		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &type);
+		s_vramReadFormat = (format == GL_RG && type == GL_UNSIGNED_BYTE) ? GL_RG : GL_RGBA;
+		NATIVE_RENDERER_LOG("*VRAM readback format: %s\n", (s_vramReadFormat == GL_RG) ? "RG" : "RGBA");
+	}
+
+	if (s_vramReadFormat == GL_RG)
+	{
+		glReadPixels(x, y, w, h, GL_RG, GL_UNSIGNED_BYTE, s_vram.cpuPixels + (size_t)y * VRAM_WIDTH + x);
+		return;
+	}
+
+	if (s_vramReadRgbaPixels == NULL)
+	{
+		s_vramReadRgbaPixels = (u8 *)SDL_malloc((size_t)VRAM_WIDTH * VRAM_HEIGHT * 4);
+		if (s_vramReadRgbaPixels == NULL)
+		{
+			return;
+		}
+	}
+	glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+	glPixelStorei(GL_PACK_ALIGNMENT, 4);
+	glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, s_vramReadRgbaPixels);
+	for (int row = 0; row < h; row++)
+	{
+		const u8 *src = s_vramReadRgbaPixels + (size_t)row * w * 4;
+		u16 *dst = s_vram.cpuPixels + (size_t)(y + row) * VRAM_WIDTH + x;
+		for (int column = 0; column < w; column++)
+		{
+			dst[column] = (u16)(src[column * 4] | ((u16)src[column * 4 + 1] << 8));
+		}
+	}
+}
+#endif
+
 #ifdef __vita__
 // Scratch staging buffer for VRAM readback and upload. Vita has no PBO path,
 // so transfers bounce through this; only this module touches it.
@@ -411,8 +460,12 @@ internal void NativeRenderer_SyncGpuVRAMToCPU(int x, int y, int w, int h)
 #ifndef __vita__
 	glPixelStorei(GL_PACK_ROW_LENGTH, VRAM_WIDTH);
 	glPixelStorei(GL_PACK_ALIGNMENT, sizeof(u16));
+#if defined(CTR_HANDHELD)
+	NativeRenderer_ReadVRAMPixels(readRect.x, readRect.y, readRect.w, readRect.h);
+#else
 	glReadPixels(readRect.x, readRect.y, readRect.w, readRect.h, VRAM_FORMAT, GL_UNSIGNED_BYTE,
 	             s_vram.cpuPixels + (size_t)readRect.y * VRAM_WIDTH + readRect.x);
+#endif
 #else
 	// READBACKS_SPEEDHACK deliberately omits vitaGL's implicit scene finish.
 	// CPU consumers such as the pause-screen compressor access the returned

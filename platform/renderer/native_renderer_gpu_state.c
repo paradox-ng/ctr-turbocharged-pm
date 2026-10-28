@@ -726,7 +726,7 @@ internal void NativeRenderer_SetViewPort(int x, int y, int width, int height)
 }
 internal void NativeRenderer_SetWireframe(int enable)
 {
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(CTR_HANDHELD)
 	(void)enable;
 #else
 	glPolygonMode(GL_FRONT_AND_BACK, enable ? GL_LINE : GL_FILL);

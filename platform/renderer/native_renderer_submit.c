@@ -137,7 +137,15 @@ void NativeRenderer_DrawStaticObjectTriangles(const s32 *firstVertex, const s32 
 		glCullFace(GL_BACK);
 		glFrontFace(cullMode == 1 ? GL_CW : GL_CCW);
 	}
+#if defined(CTR_HANDHELD)
+	// GLES 3.0 has no glMultiDrawArrays.
+	for (int i = 0; i < draws; i++)
+	{
+		glDrawArrays(GL_TRIANGLES, firstVertex[i], vertexCount[i]);
+	}
+#else
 	glMultiDrawArrays(GL_TRIANGLES, (const GLint *)firstVertex, (const GLsizei *)vertexCount, draws);
+#endif
 	if (cullMode)
 		glDisable(GL_CULL_FACE);
 	NativeRenderer_RestoreVertexArray();
@@ -162,18 +170,20 @@ void NativeRenderer_DrawObjectTriangles(int startVertex, int triangles, u32 cull
 
 void NativeRenderer_PushDebugLabel(const char *label)
 {
-#if !defined(__vita__) && !defined(__EMSCRIPTEN__)
+#if !defined(__vita__) && !defined(__EMSCRIPTEN__) && !defined(CTR_HANDHELD)
 	if (!GLAD_GL_KHR_debug)
 	{
 		return;
 	}
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0x8000, strlen(label), label);
+#else
+	(void)label;
 #endif
 }
 
 void NativeRenderer_PopDebugLabel(void)
 {
-#if !defined(__vita__) && !defined(__EMSCRIPTEN__)
+#if !defined(__vita__) && !defined(__EMSCRIPTEN__) && !defined(CTR_HANDHELD)
 	if (!GLAD_GL_KHR_debug)
 	{
 		return;

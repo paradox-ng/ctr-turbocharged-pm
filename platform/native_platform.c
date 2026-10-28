@@ -7,11 +7,13 @@
 #include "platform/native_adhoc.h"
 #include "platform/native_cd.h"
 #include "platform/native_discord.h"
-#if defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__) || defined(CTR_HANDHELD)
 #include <GLES3/gl3.h>
-#include <emscripten.h>
 #else
 #include "platform/native_glad.h"
+#endif
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
 #endif
 #include "platform/native_gpu.h"
 #include "platform/native_input.h"
@@ -267,9 +269,16 @@ internal void Platform_TakeScreenshot(void)
 {
 	u8 *pixels = (u8 *)malloc(g_windowWidth * g_windowHeight * 4);
 
+#if defined(CTR_HANDHELD)
+	// GLES only guarantees RGBA reads.
+	glReadPixels(0, 0, g_windowWidth, g_windowHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+	SDL_Surface *surface = SDL_CreateSurfaceFrom(g_windowWidth, g_windowHeight, SDL_PIXELFORMAT_RGBA32, pixels, g_windowWidth * 4);
+#else
 	glReadPixels(0, 0, g_windowWidth, g_windowHeight, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
 
 	SDL_Surface *surface = SDL_CreateSurfaceFrom(g_windowWidth, g_windowHeight, SDL_PIXELFORMAT_BGRA8888, pixels, g_windowWidth * 4);
+#endif
 
 	SDL_SaveBMP(surface, "SCREENSHOT.BMP");
 	SDL_DestroySurface(surface);

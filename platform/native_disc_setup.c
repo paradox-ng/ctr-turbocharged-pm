@@ -1,6 +1,7 @@
 // Included after native_disc_image.c/native_assets.c in the native unity build.
 // The importer uses the same disc parser, before any game/audio threads start.
-#if (defined(_WIN32) || defined(__linux__)) && !defined(__EMSCRIPTEN__) && !defined(__vita__)
+// Handhelds have no file picker; their launch script checks for the disc.
+#if (defined(_WIN32) || defined(__linux__)) && !defined(__EMSCRIPTEN__) && !defined(__vita__) && !defined(CTR_HANDHELD)
 
 struct NativeDiscSetupTask
 {

@@ -105,7 +105,7 @@ int gNativeRelicRaceResultTier = -1;
 #include "platform/native_projection.c"
 #include "platform/native_physics.c"
 #include "platform/native_collision.c"
-#if !defined(__EMSCRIPTEN__)
+#if !defined(__EMSCRIPTEN__) && !defined(CTR_HANDHELD)
 #include "platform/native_glad.c"
 #endif
 #include "platform/native_input.c"
@@ -434,8 +434,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-#if defined(__linux__) && !defined(__vita__) && !defined(__EMSCRIPTEN__) && (UINTPTR_MAX == 0xFFFFFFFFu)
-	// 32-bit Linux builds only; 64-bit builds keep SDL's default driver order.
+#if defined(__linux__) && !defined(__vita__) && !defined(__EMSCRIPTEN__) && !defined(CTR_HANDHELD) && (UINTPTR_MAX == 0xFFFFFFFFu)
+	// 32-bit desktop Linux builds only (handhelds have neither X11 nor Wayland); 64-bit builds keep SDL's default driver order.
 	// 32-bit builds do not get along with GPU drivers under native Wayland, so
 	// prefer X11 (through XWayland on Wayland desktops), keeping Wayland only as
 	// a fallback when X11 is unavailable. A SDL_VIDEODRIVER that asks for Wayland
@@ -513,6 +513,11 @@ int main(int argc, char *argv[])
 #if defined(__vita__)
 	printf("[CTR Native] Turbocharged widescreen 960x544\n");
 	Platform_Init("Crash Team Racing: Turbocharged", 960, 544);
+#elif defined(CTR_HANDHELD)
+	// KMS/DRM shows the window fullscreen in the closest display mode, so ask
+	// for the H700's 640x480 panel; other panels still get their own mode.
+	printf("[CTR Native] Handheld 640x480\n");
+	Platform_Init("Crash Team Racing: Turbocharged", 640, 480);
 #elif CTR_NATIVE_WIDESCREEN
 	printf("[CTR Native] Turbocharged widescreen 1280x720\n");
 	Platform_Init("Crash Team Racing: Turbocharged", 1280, 720);

@@ -17,6 +17,13 @@ endif()
 # than a cosmetic one. Renaming the product is not.
 set(CTR_PRODUCT_NAME "Crash Team Racing: Turbocharged")
 
+# Linux handhelds (PortMaster): GLES 3.0 through the web build's renderer path,
+# SDL on KMS/DRM with no X11 or Wayland, and no desktop dialogs or update check.
+option(CTR_HANDHELD "Linux handheld build: GLES 3.0 over KMS/DRM, no desktop dialogs" OFF)
+if(CTR_HANDHELD AND (EMSCRIPTEN OR WIN32))
+    message(FATAL_ERROR "CTR_HANDHELD is for Linux handheld builds only.")
+endif()
+
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR
         "CTR Native currently requires a 32-bit target. "
@@ -140,10 +147,30 @@ set(SDL_POWER OFF CACHE BOOL "" FORCE)
 set(SDL_VULKAN OFF CACHE BOOL "" FORCE)
 if(EMSCRIPTEN)
     set(SDL_OPENGLES ON CACHE BOOL "" FORCE)
+elseif(CTR_HANDHELD)
+    # Handhelds have no desktop: no file picker, X11 or Wayland. Video goes
+    # through KMS/DRM with EGL and GLES; SDL loads DRM, GBM and the audio
+    # libraries at runtime, so whichever audio server the firmware runs works.
+    set(SDL_OPENGLES ON CACHE BOOL "" FORCE)
+    set(SDL_OPENGL OFF CACHE BOOL "" FORCE)
+    set(SDL_DIALOG OFF CACHE BOOL "" FORCE)
+    set(SDL_X11 OFF CACHE BOOL "" FORCE)
+    set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
+    set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
+    set(SDL_KMSDRM ON CACHE BOOL "" FORCE)
+    set(SDL_ALSA ON CACHE BOOL "" FORCE)
+    set(SDL_PULSEAUDIO ON CACHE BOOL "" FORCE)
+    set(SDL_PIPEWIRE ON CACHE BOOL "" FORCE)
+    set(SDL_LIBUDEV ON CACHE BOOL "" FORCE)
+    # Only used when SDL_VIDEODRIVER=offscreen asks for it: a headless EGL
+    # target for smoke-testing the GLES path on a PC with Mesa.
+    set(SDL_OFFSCREEN ON CACHE BOOL "" FORCE)
 else()
     set(SDL_OPENGLES OFF CACHE BOOL "" FORCE)
 endif()
-set(SDL_OFFSCREEN OFF CACHE BOOL "" FORCE)
+if(NOT CTR_HANDHELD)
+    set(SDL_OFFSCREEN OFF CACHE BOOL "" FORCE)
+endif()
 set(SDL_SNDIO OFF CACHE BOOL "" FORCE)
 set(SDL_SNDIO_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "" FORCE)
@@ -180,6 +207,11 @@ target_compile_definitions(ctr_native PRIVATE
 )
 if(NOT EMSCRIPTEN)
     target_compile_definitions(ctr_native PRIVATE CTR_INTERNAL)
+endif()
+if(CTR_HANDHELD)
+    target_compile_definitions(ctr_native PRIVATE CTR_HANDHELD=1)
+    # SDL loads libEGL itself; the renderer calls GLES directly.
+    target_link_libraries(ctr_native GLESv2)
 endif()
 if(CTR_NATIVE_MSVC_FRONTEND)
     target_compile_options(ctr_native PRIVATE

@@ -69,7 +69,7 @@ internal int NativeRenderer_InitialiseGLContext(char *windowName, int fullscreen
 	}
 
 	int major_version = 3;
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(CTR_HANDHELD)
 	int minor_version = 0;
 	int profile = SDL_GL_CONTEXT_PROFILE_ES;
 #else
@@ -104,7 +104,7 @@ internal int NativeRenderer_InitialiseGLContext(char *windowName, int fullscreen
 
 internal int NativeRenderer_InitialiseGLExt(void)
 {
-#if !defined(__vita__) && !defined(__EMSCRIPTEN__)
+#if !defined(__vita__) && !defined(__EMSCRIPTEN__) && !defined(CTR_HANDHELD)
 	GLenum err = gladLoadGL();
 
 	if (err == 0)
@@ -205,10 +205,10 @@ internal void NativeRenderer_ResolveGpuMeasurements(b32 waitForResults)
 			continue;
 		}
 
-		GLint available = 0;
+		GLuint available = 0;
 		if (!waitForResults)
 		{
-			glGetQueryObjectiv(query->id, GL_QUERY_RESULT_AVAILABLE, &available);
+			glGetQueryObjectuiv(query->id, GL_QUERY_RESULT_AVAILABLE, &available);
 			if (!available)
 			{
 				continue;
@@ -401,7 +401,14 @@ int NativeRenderer_InitialisePSX(void)
 	GLint glMinor = 0;
 	glGetIntegerv(GL_MAJOR_VERSION, &glMajor);
 	glGetIntegerv(GL_MINOR_VERSION, &glMinor);
+#if defined(CTR_HANDHELD)
+	// GL_TIME_ELAPSED is desktop only; GLES would need EXT_disjoint_timer_query.
+	(void)glMajor;
+	(void)glMinor;
+	s_gpuTimerSupported = false;
+#else
 	s_gpuTimerSupported = (glMajor > 3) || ((glMajor == 3) && (glMinor >= 3)) || SDL_GL_ExtensionSupported("GL_ARB_timer_query");
+#endif
 	if (s_gpuTimerSupported)
 	{
 		GLuint queryIds[NATIVE_GPU_TIMER_QUERY_COUNT];

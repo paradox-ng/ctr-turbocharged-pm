@@ -33,7 +33,7 @@
 #include <platform/native_renderer.h>
 #include <platform/native_renderer_types.h>
 
-#if defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__) || defined(CTR_HANDHELD)
 #include <GLES3/gl3.h>
 #else
 #include "platform/native_glad.h"
