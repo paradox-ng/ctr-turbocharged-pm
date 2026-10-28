@@ -42,7 +42,7 @@ The game checks the image at startup and exits if the region or format is wrong.
 
 ## Building
 
-The build runs in a Debian bullseye container (glibc 2.31) with the armhf cross compiler, so the binary also runs on firmware with an older glibc. The Dockerfile and CMake toolchain file are in [packaging/portmaster/docker](packaging/portmaster/docker). Full build steps will be added here with the first working build.
+The build runs in a Debian bullseye container (glibc 2.31) with the armhf cross compiler, so the binary runs on any firmware with glibc 2.31 or newer. The Dockerfile and CMake toolchain file are in [packaging/portmaster/docker](packaging/portmaster/docker). Full build steps will be added here with the first working build.
 
 ## Branches
 
