@@ -766,6 +766,28 @@ void NativeRenderer_SwapWindow(void)
 		SDL_GL_SwapWindow(g_window);
 	}
 #else
+#if defined(CTR_HANDHELD)
+	// Alpha holds the PS1 mask bit, but SDL's KMS/DRM surface is ARGB8888 and
+	// some display engines blend the plane by it, which would show mask-clear
+	// pixels as black. Make the finished frame opaque before it is shown.
+	GLint previousFramebuffer;
+	GLfloat previousClearColor[4];
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFramebuffer);
+	glGetFloatv(GL_COLOR_CLEAR_VALUE, previousClearColor);
+	const GLboolean previousScissorEnabled = glIsEnabled(GL_SCISSOR_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDisable(GL_SCISSOR_TEST);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glClearColor(previousClearColor[0], previousClearColor[1], previousClearColor[2], previousClearColor[3]);
+	if (previousScissorEnabled)
+	{
+		glEnable(GL_SCISSOR_TEST);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)previousFramebuffer);
+#endif
 	SDL_GL_SwapWindow(g_window);
 #endif
 	NativePerf_EndScope(NATIVE_PERF_BUCKET_SWAP_WINDOW);
