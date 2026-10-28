@@ -32,7 +32,15 @@ static int NativeAspect_ValidRatio(int ratio)
 static NativeAspectFraction NativeAspect_GetScaleFraction(void)
 {
 	if (!NativeAspect_IsActive())
+	{
+#if defined(CTR_HANDHELD)
+		// Most handheld screens are 4:3. There the classic renderer keeps the
+		// retail framing when 4:3 is selected, instead of its fixed widescreen.
+		if (gNativeAspectRatio == NATIVE_ASPECT_4_3)
+			return s_nativeAspectScale[NATIVE_ASPECT_4_3];
+#endif
 		return (NativeAspectFraction){34, 45};
+	}
 	if (!NativeAspect_ValidRatio(gNativeAspectRatio))
 		return s_nativeAspectScale[NATIVE_ASPECT_16_9];
 	return s_nativeAspectScale[gNativeAspectRatio];
@@ -110,6 +118,10 @@ int32_t NativeAspect_ScaleXCeil(int32_t x)
 void NativeAspect_GetPresentation(int *w, int *h)
 {
 	int ratio = NativeAspect_IsActive() && NativeAspect_ValidRatio(gNativeAspectRatio) ? gNativeAspectRatio : NATIVE_ASPECT_16_9;
+#if defined(CTR_HANDHELD)
+	if (!NativeAspect_IsActive() && gNativeAspectRatio == NATIVE_ASPECT_4_3)
+		ratio = NATIVE_ASPECT_4_3;
+#endif
 #ifdef __vita__
 	if (!NativeAspect_IsActive())
 	{
