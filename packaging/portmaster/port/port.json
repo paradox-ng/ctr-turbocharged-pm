@@ -1,0 +1,27 @@
+{
+    "version": 2,
+    "name": "ctrturbocharged.zip",
+    "items": [
+        "Crash Team Racing Turbocharged.sh",
+        "ctrturbocharged/"
+    ],
+    "items_opt": null,
+    "attr": {
+        "title": "Crash Team Racing: Turbocharged",
+        "desc": "A native PC port of Crash Team Racing, rebuilt from the decompiled source, with higher precision rendering, smoother frame rates and quality of life options.",
+        "inst": "Requires your own NTSC-U (US) Crash Team Racing disc image (SCUS-94426) as a raw .bin with 2352-byte sectors. A .iso does not work. Copy the .bin to ports/ctrturbocharged/assets/.",
+        "genres": [
+            "racing"
+        ],
+        "porter": [
+            "paradox-ng"
+        ],
+        "image": {},
+        "rtr": false,
+        "runtime": null,
+        "reqs": [],
+        "arch": [
+            "armhf"
+        ]
+    }
+}

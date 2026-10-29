@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gameList>
+  <game>
+    <path>./Crash Team Racing Turbocharged.sh</path>
+    <name>Crash Team Racing: Turbocharged</name>
+    <desc>Crash Bandicoot and friends race karts to save the world from Nitros Oxide. Turbocharged is a native port of Crash Team Racing, rebuilt from the decompiled source, with sub-pixel vertex precision, higher frame rates, extra unlocks and quality of life options. Requires your own NTSC-U disc image.</desc>
+    <releasedate>19990930T000000</releasedate>
+    <developer>Naughty Dog</developer>
+    <publisher>Sony Computer Entertainment</publisher>
+    <genre>Racing</genre>
+    <image>./ctrturbocharged/screenshot.png</image>
+  </game>
+</gameList>

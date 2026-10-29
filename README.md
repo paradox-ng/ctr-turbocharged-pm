@@ -6,13 +6,15 @@ Turbocharged is Cameron Redmore's PC fork of Rinnegatamante's [High Octane](http
 
 ## Status
 
-Work in progress. The port has not run on a device yet.
+Work in progress. The handheld build compiles and renders the intro, menus and demo races correctly on a PC through Mesa's GLES driver, but it has not run on a device yet.
 
 - [ ] Device check: 32-bit GPU, DRM and audio libraries on muOS
-- [ ] `CTR_HANDHELD` build option (GLES 3.0, KMS/DRM, no desktop dialogs)
-- [ ] armhf build in Docker
+- [x] `CTR_HANDHELD` build option (GLES 3.0, KMS/DRM, no desktop dialogs)
+- [x] armhf build in Docker
+- [x] Headless GLES smoke test on a PC
 - [ ] Boots and plays on the RG40XXV
-- [ ] PortMaster package (launch script, `port.json`, `gameinfo.xml`)
+- [x] PortMaster package (launch script, `port.json`, `gameinfo.xml`)
+- [ ] Screenshot from a device
 - [ ] Performance defaults for the H700
 - [ ] Testing on Knulli and ROCKNIX
 
@@ -25,6 +27,8 @@ A new CMake option, `CTR_HANDHELD`, switches the build to:
 - OpenGL ES 3.0, through the GLES renderer path High Octane wrote for its web build
 - SDL3 with KMS/DRM video and ALSA, PulseAudio or PipeWire audio, with no X11 or Wayland
 - no file picker or message boxes, since the handheld has no desktop, and no online update check
+- an opaque final frame, because the alpha channel carries the PS1 mask bit and SDL's KMS/DRM surface scans out with alpha
+- 4:3 framing for the classic renderer when the aspect ratio option is 4:3, instead of its fixed widescreen
 
 With the option off, desktop builds are unchanged.
 
@@ -36,13 +40,29 @@ The port ships no game data, so you need your own copy of the game.
 
 - Dump your NTSC-U (US) Crash Team Racing disc, serial SCUS-94426.
 - Use the raw BIN with MODE2/2352 sectors. A 2048-byte `.iso` does not work, and the game ignores the `.cue` file. A single-track Redump dump of the US disc is in the right format.
-- Rename the BIN to `ctr-u.bin` and copy it to `ports/ctrturbocharged/assets/` on the SD card.
+- Copy the BIN to `ports/ctrturbocharged/assets/` on the SD card. The launcher renames it to `ctr-u.bin` on first start.
 
-The game checks the image at startup and exits if the region or format is wrong.
+The game checks the image at startup and exits if the region or format is wrong. The reason is in `ports/ctrturbocharged/log.txt`.
 
 ## Building
 
-The build runs in a Debian bullseye container (glibc 2.31) with the armhf cross compiler, so the binary runs on any firmware with glibc 2.31 or newer. The Dockerfile and CMake toolchain file are in [packaging/portmaster/docker](packaging/portmaster/docker). Full build steps will be added here with the first working build.
+You need Docker. The build runs in a Debian bullseye container with the armhf cross compiler, so the binary never needs a glibc newer than 2.31.
+
+```sh
+packaging/portmaster/build.sh
+```
+
+This builds `build-armhf/ctr_native` and puts two things in `dist/portmaster/`: `ctrturbocharged/`, the port folder in the layout PortMaster-New expects, and `ctrturbocharged.zip`, the same port laid out for a device. To install it on a device, copy the zip into the `autoinstall` folder inside PortMaster's folder (`/mnt/mmc/MUOS/PortMaster/autoinstall/` on muOS) and open PortMaster, which installs it.
+
+To check the GLES renderer without a device, run the smoke test with your disc image:
+
+```sh
+packaging/portmaster/smoke-test.sh /path/to/ctr-u.bin
+```
+
+It builds a 32-bit x86 copy of the handheld build, runs it headless on Mesa's software GLES driver, and saves frames of the intro and a demo race to `dist/smoke/`. It also lists any GL errors Mesa reports.
+
+The port files (launch script, metadata, default config) are in [packaging/portmaster/port](packaging/portmaster/port), and the containers in [packaging/portmaster/docker](packaging/portmaster/docker).
 
 ## Branches
 

@@ -1,0 +1,18 @@
+# 32-bit x86 environment for smoke-testing the CTR_HANDHELD (GLES) build on a
+# PC: Mesa's llvmpipe provides GLES 3 through EGL, and SDL's offscreen driver
+# needs no display. It catches GLSL ES and GLES errors before device testing.
+FROM i386/debian:bullseye
+RUN rm -f /etc/apt/sources.list.d/* \
+ && printf '%s\n' \
+      'deb http://archive.debian.org/debian bullseye main' \
+      'deb http://archive.debian.org/debian bullseye-updates main' \
+      'deb http://archive.debian.org/debian-security bullseye-security main' \
+      'deb http://archive.debian.org/debian bullseye-backports main' \
+      > /etc/apt/sources.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      build-essential ninja-build git pkg-config python3 file ca-certificates \
+      libdrm-dev libgbm-dev libegl-dev libgles-dev libegl-mesa0 libgl1-mesa-dri \
+      libasound2-dev libudev-dev gdb \
+ && apt-get install -y --no-install-recommends -t bullseye-backports cmake \
+ && rm -rf /var/lib/apt/lists/*

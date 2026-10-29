@@ -1,6 +1,7 @@
 # armhf cross-build environment for the PortMaster port.
 # Debian bullseye keeps glibc at 2.31 so the binary runs on older firmware.
 # Bullseye now lives on archive.debian.org, security updates and backports included.
+# SDL needs PipeWire 0.3.44 or newer, so its headers come from backports too.
 FROM debian:bullseye
 RUN rm -f /etc/apt/sources.list.d/* \
  && printf '%s\n' \
@@ -14,5 +15,5 @@ RUN rm -f /etc/apt/sources.list.d/* \
       build-essential crossbuild-essential-armhf ninja-build git pkg-config python3 file ca-certificates \
       libdrm-dev:armhf libgbm-dev:armhf libegl-dev:armhf libgles-dev:armhf \
       libasound2-dev:armhf libpulse-dev:armhf libudev-dev:armhf \
- && apt-get install -y --no-install-recommends -t bullseye-backports cmake \
+ && apt-get install -y --no-install-recommends -t bullseye-backports cmake libpipewire-0.3-dev:armhf \
  && rm -rf /var/lib/apt/lists/*
