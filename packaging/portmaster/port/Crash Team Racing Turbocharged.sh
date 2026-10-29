@@ -66,11 +66,22 @@ export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
 
 $ESUDO chmod +x "$GAMEDIR/ctr_native"
 
+# Record what the firmware offers a 32-bit program, so log.txt explains a
+# failed start: the armhf loader, which libraries resolve, and the DRM nodes.
+echo "Device: $DEVICE_NAME, $CFW_NAME $CFW_VERSION, $(uname -m)"
+if [ -e /lib/ld-linux-armhf.so.3 ]; then
+  /lib/ld-linux-armhf.so.3 --list "$GAMEDIR/ctr_native"
+else
+  echo "No armhf loader at /lib/ld-linux-armhf.so.3: this firmware cannot run 32-bit programs."
+fi
+ls -l /dev/dri 2>&1
+
 # gptokeyb only provides the exit hotkey; the game reads the gamepad itself.
 $GPTOKEYB "ctr_native" &
 
 pm_platform_helper "$GAMEDIR/ctr_native"
 
 ./ctr_native
+echo "ctr_native exited with code $?"
 
 pm_finish
